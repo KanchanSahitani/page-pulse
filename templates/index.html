@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Page Pulse — Instant Web Page Auditor</title>
+  <meta name="description" content="Audit any web page instantly. Get HTTP status, response time, SEO metrics, accessibility checks, and more in one click." />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          colors: {
+            brand: {
+              50:  '#eef2ff',
+              100: '#e0e7ff',
+              200: '#c7d2fe',
+              300: '#a5b4fc',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              800: '#3730a3',
+              900: '#312e81',
+            },
+            surface: {
+              DEFAULT: '#0f0f1a',
+              100: '#16162a',
+              200: '#1e1e35',
+              300: '#272741',
+            },
+          },
+          animation: {
+            'gradient': 'gradient 8s ease infinite',
+            'float': 'float 6s ease-in-out infinite',
+            'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'slide-up': 'slideUp 0.5s ease-out',
+            'fade-in': 'fadeIn 0.6s ease-out',
+            'scale-in': 'scaleIn 0.4s ease-out',
+          },
+          keyframes: {
+            gradient: {
+              '0%, 100%': { backgroundPosition: '0% 50%' },
+              '50%': { backgroundPosition: '100% 50%' },
+            },
+            float: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-20px)' },
+            },
+            slideUp: {
+              '0%': { opacity: '0', transform: 'translateY(30px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+            scaleIn: {
+              '0%': { opacity: '0', transform: 'scale(0.9)' },
+              '100%': { opacity: '1', transform: 'scale(1)' },
+            },
+          },
+        },
+      },
+    }
+  </script>
+
+  <style>
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0f0f1a; }
+    ::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 3px; }
+
+    /* Animated gradient background */
+    .bg-animated-gradient {
+      background: linear-gradient(-45deg, #0f0f1a, #1a103d, #0f0f1a, #0d1f3c);
+      background-size: 400% 400%;
+      animation: gradient 8s ease infinite;
+    }
+
+    /* Glassmorphism card */
+    .glass {
+      background: rgba(30, 30, 53, 0.6);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(99, 102, 241, 0.15);
+    }
+
+    .glass-hover:hover {
+      background: rgba(30, 30, 53, 0.8);
+      border-color: rgba(99, 102, 241, 0.35);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(99, 102, 241, 0.15);
+    }
+
+    /* Glow effect on input focus */
+    .input-glow:focus {
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25), 0 0 20px rgba(99, 102, 241, 0.1);
+    }
+
+    /* Floating orbs */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.12;
+      pointer-events: none;
+    }
+
+    /* Skeleton loading */
+    .skeleton {
+      background: linear-gradient(90deg, rgba(30,30,53,0.6) 25%, rgba(50,50,80,0.6) 50%, rgba(30,30,53,0.6) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Status badge */
+    .status-success { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+    .status-warning { background: rgba(234, 179, 8, 0.15); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.3); }
+    .status-error   { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+    /* Progress ring */
+    .progress-ring { transition: stroke-dashoffset 0.8s ease-in-out; }
+  </style>
+</head>
+
+<body class="bg-animated-gradient min-h-screen font-sans text-white antialiased">
+
+  <!-- Floating background orbs -->
+  <div class="orb w-96 h-96 bg-brand-500 top-[-10%] left-[-5%] animate-float" style="animation-delay: 0s;"></div>
+  <div class="orb w-80 h-80 bg-purple-600 bottom-[10%] right-[-5%] animate-float" style="animation-delay: 2s;"></div>
+  <div class="orb w-64 h-64 bg-cyan-500 top-[50%] left-[50%] animate-float" style="animation-delay: 4s;"></div>
+
+  <div class="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 py-12">
+
+    <!-- ============================================ -->
+    <!-- HEADER                                       -->
+    <!-- ============================================ -->
+    <header class="text-center mb-12 animate-fade-in">
+      <!-- Logo mark -->
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-500 to-purple-600 mb-6 shadow-lg shadow-brand-500/25">
+        <svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+      </div>
+      <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight">
+        Page <span class="bg-gradient-to-r from-brand-400 to-purple-400 bg-clip-text text-transparent">Pulse</span>
+      </h1>
+      <p class="mt-3 text-lg text-gray-400 max-w-xl mx-auto">
+        Instantly audit any web page. Get HTTP status, performance, SEO metrics, and accessibility insights in one click.
+      </p>
+    </header>
+
+    <!-- ============================================ -->
+    <!-- SEARCH FORM                                  -->
+    <!-- ============================================ -->
+    <form id="audit-form" class="glass rounded-2xl p-2 flex items-center gap-2 mb-10 animate-slide-up transition-all duration-300 hover:border-brand-400/30">
+      <div class="relative flex-1">
+        <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/>
+        </svg>
+        <input
+          id="url-input"
+          type="text"
+          placeholder="Enter a URL to audit — e.g. example.com"
+          autocomplete="url"
+          required
+          class="w-full bg-transparent text-white placeholder-gray-500 pl-12 pr-4 py-4 rounded-xl outline-none input-glow transition-all duration-200 text-base"
+        />
+      </div>
+      <button
+        id="audit-btn"
+        type="submit"
+        class="flex-shrink-0 px-6 py-4 bg-gradient-to-r from-brand-600 to-purple-600 hover:from-brand-500 hover:to-purple-500 text-white font-semibold rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-brand-500/25 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+      >
+        <svg id="btn-icon" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <svg id="btn-spinner" class="w-5 h-5 animate-spin hidden" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+        </svg>
+        <span id="btn-text">Audit</span>
+      </button>
+    </form>
+
+    <!-- ============================================ -->
+    <!-- ERROR MESSAGE                                -->
+    <!-- ============================================ -->
+    <div id="error-container" class="hidden mb-8 animate-scale-in">
+      <div class="glass rounded-2xl p-6 border-red-500/30 bg-red-500/5">
+        <div class="flex items-start gap-4">
+          <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-red-500/15 flex items-center justify-center">
+            <svg class="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.072 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="font-semibold text-red-300 mb-1" id="error-title">Error</h3>
+            <p class="text-gray-400 text-sm" id="error-detail"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- LOADING SKELETON                             -->
+    <!-- ============================================ -->
+    <div id="loading-skeleton" class="hidden mb-8 space-y-4 animate-fade-in">
+      <div class="glass rounded-2xl p-6">
+        <div class="skeleton h-6 w-1/3 rounded-lg mb-4"></div>
+        <div class="skeleton h-4 w-2/3 rounded-lg mb-3"></div>
+        <div class="skeleton h-4 w-1/2 rounded-lg"></div>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="glass rounded-2xl p-5"><div class="skeleton h-8 w-16 rounded-lg mb-2"></div><div class="skeleton h-4 w-20 rounded-lg"></div></div>
+        <div class="glass rounded-2xl p-5"><div class="skeleton h-8 w-16 rounded-lg mb-2"></div><div class="skeleton h-4 w-20 rounded-lg"></div></div>
+        <div class="glass rounded-2xl p-5"><div class="skeleton h-8 w-16 rounded-lg mb-2"></div><div class="skeleton h-4 w-20 rounded-lg"></div></div>
+        <div class="glass rounded-2xl p-5"><div class="skeleton h-8 w-16 rounded-lg mb-2"></div><div class="skeleton h-4 w-20 rounded-lg"></div></div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- RESULTS                                      -->
+    <!-- ============================================ -->
+    <div id="results-container" class="hidden space-y-6">
+
+      <!-- URL + Status Header -->
+      <div class="glass rounded-2xl p-6 animate-slide-up" style="animation-delay: 0.05s;">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div class="min-w-0">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Audited URL</p>
+            <a id="result-url" href="#" target="_blank" rel="noopener"
+               class="text-brand-400 hover:text-brand-300 font-medium truncate block transition-colors">
+            </a>
+          </div>
+          <span id="result-status-badge" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap"></span>
+        </div>
+      </div>
+
+      <!-- Metric Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <!-- HTTP Status -->
+        <div class="glass glass-hover rounded-2xl p-5 text-center transition-all duration-300 animate-scale-in" style="animation-delay: 0.1s;">
+          <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-brand-500/15 mx-auto mb-3">
+            <svg class="w-5 h-5 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <p id="metric-status" class="text-2xl font-bold text-white"></p>
+          <p class="text-xs text-gray-500 mt-1">HTTP Status</p>
+        </div>
+        <!-- Response Time -->
+        <div class="glass glass-hover rounded-2xl p-5 text-center transition-all duration-300 animate-scale-in" style="animation-delay: 0.15s;">
+          <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-cyan-500/15 mx-auto mb-3">
+            <svg class="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <p id="metric-time" class="text-2xl font-bold text-white"></p>
+          <p class="text-xs text-gray-500 mt-1">Response Time</p>
+        </div>
+        <!-- Word Count -->
+        <div class="glass glass-hover rounded-2xl p-5 text-center transition-all duration-300 animate-scale-in" style="animation-delay: 0.2s;">
+          <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-500/15 mx-auto mb-3">
+            <svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+          </div>
+          <p id="metric-words" class="text-2xl font-bold text-white"></p>
+          <p class="text-xs text-gray-500 mt-1">Word Count</p>
+        </div>
+        <!-- H1 Count -->
+        <div class="glass glass-hover rounded-2xl p-5 text-center transition-all duration-300 animate-scale-in" style="animation-delay: 0.25s;">
+          <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-amber-500/15 mx-auto mb-3">
+            <svg class="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+            </svg>
+          </div>
+          <p id="metric-h1" class="text-2xl font-bold text-white"></p>
+          <p class="text-xs text-gray-500 mt-1">H1 Tags</p>
+        </div>
+      </div>
+
+      <!-- SEO Details -->
+      <div class="glass rounded-2xl p-6 animate-slide-up" style="animation-delay: 0.3s;">
+        <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+          <svg class="w-5 h-5 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+          SEO Details
+        </h2>
+        <div class="space-y-4">
+          <!-- Title -->
+          <div class="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4">
+            <span class="text-xs font-medium text-gray-500 uppercase tracking-wider w-32 flex-shrink-0 pt-0.5">Page Title</span>
+            <p id="result-title" class="text-gray-300 text-sm"></p>
+          </div>
+          <div class="border-t border-white/5"></div>
+          <!-- Meta Description -->
+          <div class="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4">
+            <span class="text-xs font-medium text-gray-500 uppercase tracking-wider w-32 flex-shrink-0 pt-0.5">Meta Description</span>
+            <p id="result-meta" class="text-gray-300 text-sm"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Accessibility — Images missing alt -->
+      <div class="glass rounded-2xl p-6 animate-slide-up" style="animation-delay: 0.35s;">
+        <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+          <svg class="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          Accessibility: Images Missing Alt Text
+        </h2>
+        <div id="result-imgs-ok" class="hidden flex items-center gap-2 text-emerald-400">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+          </svg>
+          <span class="text-sm font-medium">All images have alt text — great job!</span>
+        </div>
+        <div id="result-imgs-bad" class="hidden">
+          <p class="text-sm text-gray-400 mb-3">
+            <span id="result-imgs-count" class="text-red-400 font-semibold"></span> image(s) are missing alt text:
+          </p>
+          <ul id="result-imgs-list" class="space-y-2 max-h-48 overflow-y-auto"></ul>
+        </div>
+      </div>
+
+    </div>
+    <!-- end #results-container -->
+
+  </div>
+  <!-- end .max-w-4xl -->
+
+  <!-- ============================================ -->
+  <!-- FOOTER                                       -->
+  <!-- ============================================ -->
+  <footer class="relative z-10 text-center py-8 text-gray-600 text-sm border-t border-white/5">
+    <a href="https://digitalheroesco.com" target="_blank" rel="noopener"
+       class="hover:text-brand-400 transition-colors duration-200">
+      Built for Digital Heroes Training Task
+    </a>
+  </footer>
+
+  <!-- ============================================ -->
+  <!-- JAVASCRIPT                                   -->
+  <!-- ============================================ -->
+  <script>
+    const form        = document.getElementById('audit-form');
+    const urlInput    = document.getElementById('url-input');
+    const auditBtn    = document.getElementById('audit-btn');
+    const btnIcon     = document.getElementById('btn-icon');
+    const btnSpinner  = document.getElementById('btn-spinner');
+    const btnText     = document.getElementById('btn-text');
+    const errorBox    = document.getElementById('error-container');
+    const errorTitle  = document.getElementById('error-title');
+    const errorDetail = document.getElementById('error-detail');
+    const skeleton    = document.getElementById('loading-skeleton');
+    const results     = document.getElementById('results-container');
+
+    // Server-side injected initial data (for dynamic SSR / pre-rendered links)
+    const INITIAL_URL    = {{ initial_url | tojson | safe }};
+    const INITIAL_REPORT = {{ initial_report | tojson | safe }};
+    const INITIAL_ERROR  = {{ initial_error | tojson | safe }};
+
+    function setLoading(on) {
+      auditBtn.disabled = on;
+      btnIcon.classList.toggle('hidden', on);
+      btnSpinner.classList.toggle('hidden', !on);
+      btnText.textContent = on ? 'Auditing…' : 'Audit';
+      skeleton.classList.toggle('hidden', !on);
+      errorBox.classList.add('hidden');
+      if (on) results.classList.add('hidden');
+    }
+
+    function showError(title, detail) {
+      errorTitle.textContent  = title;
+      errorDetail.textContent = detail;
+      errorBox.classList.remove('hidden');
+      skeleton.classList.add('hidden');
+      results.classList.add('hidden');
+    }
+
+    function statusBadgeClass(code) {
+      if (code >= 200 && code < 300) return 'status-success';
+      if (code >= 300 && code < 400) return 'status-warning';
+      return 'status-error';
+    }
+
+    function formatMs(ms) {
+      if (ms < 1000) return `${Math.round(ms)} ms`;
+      return `${(ms / 1000).toFixed(2)} s`;
+    }
+
+    function renderReport(data) {
+      // URL
+      const urlEl = document.getElementById('result-url');
+      urlEl.textContent = data.url;
+      urlEl.href = data.url;
+
+      // Status badge
+      const badge = document.getElementById('result-status-badge');
+      badge.className = `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap ${statusBadgeClass(data.http_status)}`;
+      badge.textContent = `${data.http_status} ${data.http_status >= 200 && data.http_status < 300 ? 'OK' : data.http_status >= 300 && data.http_status < 400 ? 'Redirect' : 'Error'}`;
+
+      // Metrics
+      document.getElementById('metric-status').textContent = data.http_status;
+      document.getElementById('metric-time').textContent   = formatMs(data.response_time_ms);
+      document.getElementById('metric-words').textContent  = data.word_count.toLocaleString();
+      document.getElementById('metric-h1').textContent     = data.h1_count;
+
+      // SEO
+      document.getElementById('result-title').textContent = data.page_title || '(none)';
+      document.getElementById('result-meta').textContent  = data.meta_description || '(none)';
+
+      // Images
+      const imgsOk  = document.getElementById('result-imgs-ok');
+      const imgsBad = document.getElementById('result-imgs-bad');
+      const imgsList = document.getElementById('result-imgs-list');
+      imgsList.innerHTML = '';
+
+      if (data.images_missing_alt_count === 0) {
+        imgsOk.classList.remove('hidden');
+        imgsBad.classList.add('hidden');
+      } else {
+        imgsOk.classList.add('hidden');
+        imgsBad.classList.remove('hidden');
+        document.getElementById('result-imgs-count').textContent = data.images_missing_alt_count;
+        data.images_missing_alt.forEach(src => {
+          const li = document.createElement('li');
+          li.className = 'text-xs font-mono text-gray-500 bg-surface-200 rounded-lg px-3 py-2 truncate';
+          li.textContent = src;
+          imgsList.appendChild(li);
+        });
+      }
+
+      results.classList.remove('hidden');
+    }
+
+    // Hydrate initial state if server rendered
+    if (INITIAL_URL) {
+      urlInput.value = INITIAL_URL;
+    }
+    if (INITIAL_REPORT) {
+      renderReport(INITIAL_REPORT);
+    } else if (INITIAL_ERROR) {
+      const errTitles = {
+        invalid_url: 'Invalid URL',
+        timeout: 'Request Timed Out',
+        connection_error: 'Connection Failed',
+        request_error: 'Request Error',
+        not_html: 'Not an HTML Page',
+      };
+      showError(errTitles[INITIAL_ERROR.error] || 'Error', INITIAL_ERROR.detail || 'Something went wrong.');
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const url = urlInput.value.trim();
+      if (!url) return;
+
+      setLoading(true);
+
+      try {
+        const res = await fetch('/api/audit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url }),
+        });
+
+        const body = await res.json();
+
+        if (!res.ok) {
+          const errTitles = {
+            invalid_url: 'Invalid URL',
+            timeout: 'Request Timed Out',
+            connection_error: 'Connection Failed',
+            request_error: 'Request Error',
+            not_html: 'Not an HTML Page',
+          };
+          showError(errTitles[body.error] || 'Error', body.detail || 'Something went wrong.');
+          return;
+        }
+
+        renderReport(body);
+      } catch (err) {
+        showError('Network Error', 'Could not reach the Page Pulse server. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    });
+  </script>
+</body>
+</html>

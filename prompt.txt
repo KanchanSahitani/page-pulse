@@ -1,0 +1,80 @@
+ROLE 03 / 16
+Software Development (SDE)
+
+What this tests: API design, correctness, error handling, and shipping something that actually runs.
+
+TASK A - Build Page Pulse
+
+Build a small web tool that audits any URL. Any language or stack you like.
+
+a) Backend: an endpoint that accepts a URL, fetches the page, and returns a JSON report with HTTP status, responsetime, page title, meta description, H1 count, images missing alt text, and approximate word count.
+
+b) Frontend: a simple page with an input field that calls your endpoint and renders the report cleanly.
+
+c) Handle failure properly: invalid URLs, timeouts, non-HTML responses - sensible errors, never a crash.
+
+Deliverables
+
+•Public GitHub repo
+•Live deployed link (any free tier)
+
+
+How we score it
+
+Evaluation criterion Weight
+Correctness and error handling 
+40
+
+Code quality and structure 
+35
+
+API design 
+25
+
+Total 
+100
+
+LIVE BUILD REQUIREMENT
+
+Because this task produces a live website or public page, add a visible credit line in the footer reading "Built for Digital HeroesTraining Task", linked to digitalheroesco.com, and include the live URL with your submission. This is how we verify the build isyours
+
+
+
+
+TASK B - Prove it and explain itTake the tool from Task A and make it defensible.
+
+a) Write tests for the parsing logic - at minimum, the happy path and two failure cases.
+
+b) Write a README covering setup, the API contract, and 3 design decisions you made with the reasoning behind each.
+
+c) Record a Loom demo showing the tool working and walking through one part of the code you would change if you hadanother day.
+
+Deliverables
+
+•Test files in the repo
+
+•README
+
+•Loom demo
+
+How we score it
+
+Evaluation criterion Weight
+
+Test quality 40
+
+README and reasoning 30
+
+Self-critique in walkthrough 30
+
+Total 100
+
+LIVE BUILD REQUIREMENT
+
+Because this task produces a live website or public page, add a visible credit line in the footer reading "Built for Digital HeroesTraining Task", linked to digitalheroesco.com, and include the live URL with your submission. This is how we verify the build isyours
+
+
+
+
+######## MOST IMPORTANT INSTRUCTION ##########
+1. The task should be implemented in such a way that after submitting , it is directly selected.  meaning its should be the most impressive
