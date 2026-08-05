@@ -1,5 +1,14 @@
 # Page Pulse ⚡
 
+## Live Demo
+▶️ https://page-pulse-0c4o.onrender.com/
+
+## Quick start
+1. Open the URL.
+2. Paste any website URL into the input box and click **Audit**.
+3. Review the report (status, response time, SEO, accessibility, etc.).
+
+
 A lightweight web-page auditing tool that instantly analyses any URL and returns actionable insights on HTTP performance, SEO, and accessibility.
 
 ![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python)
@@ -188,7 +197,7 @@ page-pulse/
 
 ## 🌐 Live Demo
 
-🔗 **[Live URL]** _(add after deployment)_
+🔗 ▶️ https://page-pulse-0c4o.onrender.com/
 
 ---
 
